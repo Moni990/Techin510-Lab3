@@ -26,7 +26,7 @@ Promptbase is a simple and intuitive web application built with Streamlit, desig
 ```
 pip install -r requirements.txt
 
-### Create a .env file
+### Cre
 ```
 DATABASE_URL=your_database_url
 
