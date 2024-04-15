@@ -23,12 +23,15 @@ Promptbase is a simple and intuitive web application built with Streamlit, desig
    cd path/to/promptbase
 
 ### Install the required Python packages:
+```
 pip install -r requirements.txt
 
 ### Create a .env file
+```
 DATABASE_URL=your_database_url
 
 ### Running the App
+```
 streamlit run app.py
 
 
