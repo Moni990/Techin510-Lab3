@@ -30,6 +30,7 @@ class Prompt:
     id: int = None
     title: str = ""
     prompt: str = ""
+    
 
 def upsert_prompt(prompt):
     if prompt.id is None:
@@ -61,7 +62,19 @@ def prompt_form(key, prompt=Prompt()):
 
 st.title("Promptbase")
 st.subheader("A simple app to store and retrieve prompts")
+# Add a search bar
+search_term = st.text_input("Search Prompts", "")
 
+# ... [Rest of your existing Streamlit layout code] ...
+
+# Retrieve and display the prompts
+if search_term:
+    # Use ILIKE for a case-insensitive search
+    cur.execute("SELECT id, title, prompt FROM prompts WHERE title ILIKE %s OR prompt ILIKE %s ORDER BY created_at DESC", 
+                ('%' + search_term + '%', '%' + search_term + '%'))
+else:
+    cur.execute("SELECT id, title, prompt FROM prompts ORDER BY created_at DESC")
+prompts = cur.fetchall()
 # Edit existing prompt
 edit_id = st.session_state.get('edit_id', None)
 if edit_id is not None:
@@ -96,3 +109,4 @@ for p in prompts:
                 cur.execute("DELETE FROM prompts WHERE id = %s", (p[0],))
                 con.commit()
                 st.experimental_rerun()
+
