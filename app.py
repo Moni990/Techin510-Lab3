@@ -25,12 +25,19 @@ cur.execute(
 )
 con.commit()
 
+# Add the 'is_favorite' column if it does not exist
+cur.execute(
+    """
+    ALTER TABLE prompts ADD COLUMN IF NOT EXISTS is_favorite BOOLEAN DEFAULT FALSE;
+    """
+)
+con.commit()
 @dataclass
 class Prompt:
     id: int = None
     title: str = ""
     prompt: str = ""
-    
+    is_favorite: bool = False
 
 def upsert_prompt(prompt):
     if prompt.id is None:
@@ -62,19 +69,7 @@ def prompt_form(key, prompt=Prompt()):
 
 st.title("Promptbase")
 st.subheader("A simple app to store and retrieve prompts")
-# Add a search bar
-search_term = st.text_input("Search Prompts", "")
 
-# ... [Rest of your existing Streamlit layout code] ...
-
-# Retrieve and display the prompts
-if search_term:
-    # Use ILIKE for a case-insensitive search
-    cur.execute("SELECT id, title, prompt FROM prompts WHERE title ILIKE %s OR prompt ILIKE %s ORDER BY created_at DESC", 
-                ('%' + search_term + '%', '%' + search_term + '%'))
-else:
-    cur.execute("SELECT id, title, prompt FROM prompts ORDER BY created_at DESC")
-prompts = cur.fetchall()
 # Edit existing prompt
 edit_id = st.session_state.get('edit_id', None)
 if edit_id is not None:
@@ -94,13 +89,27 @@ else:
         message = upsert_prompt(new_prompt)
         st.success(message)
 
-# Display prompts with edit and delete options
-cur.execute("SELECT id, title, prompt FROM prompts ORDER BY created_at DESC")
+# Add a search bar
+search_term = st.text_input("Search Prompts", "")
+
+# ... [Rest of your existing Streamlit layout code] ...
+
+# Retrieve and display the prompts
+if search_term:
+    # Use ILIKE for a case-insensitive search
+    cur.execute("SELECT id, title, prompt FROM prompts WHERE title ILIKE %s OR prompt ILIKE %s ORDER BY created_at DESC", 
+                ('%' + search_term + '%', '%' + search_term + '%'))
+else:
+    cur.execute("SELECT id, title, prompt FROM prompts ORDER BY created_at DESC")
+prompts = cur.fetchall()
+
+# Display prompts with edit, delete, and favorite options
+cur.execute("SELECT id, title, prompt, is_favorite FROM prompts ORDER BY created_at DESC")
 prompts = cur.fetchall()
 for p in prompts:
-    with st.expander(p[1]):
+    with st.expander(f"{p[1]}"):
         st.code(p[2])
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
             if st.button("Edit", key=f"edit_{p[0]}"):
                 st.session_state['edit_id'] = p[0]
@@ -109,4 +118,15 @@ for p in prompts:
                 cur.execute("DELETE FROM prompts WHERE id = %s", (p[0],))
                 con.commit()
                 st.experimental_rerun()
+        with col3:
+            fav_status = "Remove from Favorites" if p[3] else "Add to Favorites"
+            if st.button(fav_status, key=f"fav_{p[0]}"):
+                new_status = not p[3]
+                cur.execute(
+                    "UPDATE prompts SET is_favorite = %s WHERE id = %s",
+                    (new_status, p[0])
+                )
+                con.commit()
+                st.experimental_rerun()
+
 
