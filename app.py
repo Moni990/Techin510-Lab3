@@ -25,13 +25,13 @@ cur.execute(
 )
 con.commit()
 
-# Add the 'is_favorite' column if it does not exist
-cur.execute(
-    """
-    ALTER TABLE prompts ADD COLUMN IF NOT EXISTS is_favorite BOOLEAN DEFAULT FALSE;
-    """
-)
-con.commit()
+# # Add the 'is_favorite' column if it does not exist
+# cur.execute(
+#     """
+#     ALTER TABLE prompts ADD COLUMN IF NOT EXISTS is_favorite BOOLEAN DEFAULT FALSE;
+#     """
+# )
+# con.commit()
 @dataclass
 class Prompt:
     id: int = None
@@ -128,5 +128,6 @@ for p in prompts:
                 )
                 con.commit()
                 st.experimental_rerun()
+                
 
-
+con.close()
